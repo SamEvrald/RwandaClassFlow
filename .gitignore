@@ -1,0 +1,73 @@
+# RwandaClassFlow - MVP Development Environment
+
+# Backend
+backend/.env
+backend/media/
+backend/staticfiles/
+backend/__pycache__/
+backend/*.pyc
+backend/*.pyo
+backend/*.pyd
+backend/.Python
+backend/env
+backend/venv/
+backend/.venv/
+backend/pip-log.txt
+backend/pip-delete-this-directory.txt
+backend/.tox/
+backend/.coverage
+backend/.coverage.*
+backend/.cache
+backend/nosetests.xml
+backend/coverage.xml
+backend/*.cover
+backend/.git
+backend/.mypy_cache
+backend/.pytest_cache
+backend/.hypothesis/
+
+# Frontend
+frontend/node_modules/
+frontend/.pnp
+frontend/.pnp.js
+frontend/coverage/
+frontend/build/
+frontend/.DS_Store
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# AI Service
+ai_service/__pycache__/
+ai_service/*.pyc
+ai_service/*.pyo
+ai_service/.Python
+ai_service/env
+ai_service/venv/
+ai_service/.venv/
+ai_service/models/
+ai_service/temp/
+
+# Database
+postgres_data/
+
+# Docker
+.docker/
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
