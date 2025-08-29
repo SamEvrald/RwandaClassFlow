@@ -75,14 +75,22 @@ WSGI_APPLICATION = 'classflow_backend.wsgi.application'
 # Database
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME', default='classflow_db'),
-        'USER': config('DB_USER', default='classflow_user'),
-        'PASSWORD': config('DB_PASSWORD', default='classflow_password'),
-        'HOST': config('DB_HOST', default='localhost'),
-        'PORT': config('DB_PORT', default='5432'),
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# Production PostgreSQL configuration (commented out for MVP)
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': config('DB_NAME', default='classflow_db'),
+#         'USER': config('DB_USER', default='classflow_user'),
+#         'PASSWORD': config('DB_PASSWORD', default='classflow_password'),
+#         'HOST': config('DB_HOST', default='localhost'),
+#         'PORT': config('DB_PORT', default='5432'),
+#     }
+# }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
