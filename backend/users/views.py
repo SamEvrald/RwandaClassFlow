@@ -3,6 +3,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import update_session_auth_hash
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 from .models import User, Teacher, Student, Parent
 from .serializers import (
     UserSerializer, TeacherSerializer, StudentSerializer, 
@@ -47,10 +49,13 @@ class ParentListView(generics.ListAPIView):
         return Parent.objects.filter(user__school=self.request.user.school)
 
 
+@csrf_exempt
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
 def login_view(request):
     """User login endpoint"""
+    print(f"Login attempt - Data: {request.data}")
+    
     serializer = LoginSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.validated_data['user']
@@ -61,6 +66,8 @@ def login_view(request):
         user.last_activity = timezone.now()
         user.save(update_fields=['last_activity'])
         
+        print(f"Login successful for user: {user.username}")
+        
         return Response({
             'refresh': str(refresh),
             'access': str(refresh.access_token),
@@ -68,6 +75,7 @@ def login_view(request):
             'is_first_login': user.is_first_login
         })
     
+    print(f"Login failed - Errors: {serializer.errors}")
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -84,6 +92,7 @@ def change_password_view(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@csrf_exempt
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
 def register_school_view(request):

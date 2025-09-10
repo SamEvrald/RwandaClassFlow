@@ -9,6 +9,12 @@ interface User {
   last_name: string;
   school: number;
   preferred_language: string;
+  school_info?: {
+    school_id: number;
+    school_name: string;
+    school_type: string;
+    location: string;
+  };
 }
 
 interface AuthState {
@@ -76,133 +82,96 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     // Check if user is logged in on app start
-    const token = localStorage.getItem('token');
-    if (token && token.startsWith('mock-jwt-token-')) {
-      // For demo purposes, reconstruct user from mock token
-      const userId = token.replace('mock-jwt-token-', '');
-      const mockUsers: { [key: string]: User } = {
-        '1': {
-          id: 1,
-          username: 'teacher',
-          email: 'teacher@school.rw',
-          role: 'teacher',
-          first_name: 'Jean',
-          last_name: 'Mukamana',
-          school: 1,
-          preferred_language: 'en'
-        },
-        '2': {
-          id: 2,
-          username: 'student',
-          email: 'student@school.rw',
-          role: 'student',
-          first_name: 'Alice',
-          last_name: 'Uwimana',
-          school: 1,
-          preferred_language: 'en'
-        },
-        '3': {
-          id: 3,
-          username: 'parent',
-          email: 'parent@gmail.com',
-          role: 'parent',
-          first_name: 'Robert',
-          last_name: 'Nzeyimana',
-          school: 1,
-          preferred_language: 'en'
-        },
-        '4': {
-          id: 4,
-          username: 'admin',
-          email: 'admin@school.rw',
-          role: 'school_admin',
-          first_name: 'Grace',
-          last_name: 'Uwimana',
-          school: 1,
-          preferred_language: 'en'
+    const checkAuthStatus = async () => {
+      const token = localStorage.getItem('token');
+      if (token && !token.startsWith('mock-jwt-token-')) {
+        try {
+          // Verify token with backend by fetching user profile
+          const response = await fetch('http://localhost:8000/api/users/profile/detailed/', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (response.ok) {
+            const userData = await response.json();
+            const user: User = {
+              id: userData.id,
+              username: userData.username,
+              email: userData.email,
+              role: userData.role,
+              first_name: userData.first_name,
+              last_name: userData.last_name,
+              school: userData.school_info?.school_id || userData.school,
+              preferred_language: userData.preferred_language || 'en',
+              school_info: userData.school_info
+            };
+
+            dispatch({
+              type: 'LOGIN_SUCCESS',
+              payload: {
+                user,
+                token,
+              },
+            });
+          } else {
+            // Token is invalid, remove it
+            localStorage.removeItem('token');
+            localStorage.removeItem('refresh_token');
+            dispatch({ type: 'SET_LOADING', payload: false });
+          }
+        } catch (error) {
+          // Network error or token invalid
+          localStorage.removeItem('token');
+          localStorage.removeItem('refresh_token');
+          dispatch({ type: 'SET_LOADING', payload: false });
         }
-      };
-      
-      if (mockUsers[userId]) {
-        dispatch({
-          type: 'LOGIN_SUCCESS',
-          payload: {
-            user: mockUsers[userId],
-            token,
-          },
-        });
       } else {
         dispatch({ type: 'SET_LOADING', payload: false });
       }
-    } else {
-      dispatch({ type: 'SET_LOADING', payload: false });
-    }
+    };
+
+    checkAuthStatus();
   }, []);
 
   const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       
-      // For demo purposes, simulate different user roles based on username
-      const mockUsers: { [key: string]: User } = {
-        'teacher': {
-          id: 1,
-          username: 'teacher',
-          email: 'teacher@school.rw',
-          role: 'teacher',
-          first_name: 'Jean',
-          last_name: 'Mukamana',
-          school: 1,
-          preferred_language: 'en'
+      // Make API call to Django backend
+      const response = await fetch('http://localhost:8000/api/users/login/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        'student': {
-          id: 2,
-          username: 'student',
-          email: 'student@school.rw',
-          role: 'student',
-          first_name: 'Alice',
-          last_name: 'Uwimana',
-          school: 1,
-          preferred_language: 'en'
-        },
-        'parent': {
-          id: 3,
-          username: 'parent',
-          email: 'parent@gmail.com',
-          role: 'parent',
-          first_name: 'Robert',
-          last_name: 'Nzeyimana',
-          school: 1,
-          preferred_language: 'en'
-        },
-        'admin': {
-          id: 4,
-          username: 'admin',
-          email: 'admin@school.rw',
-          role: 'school_admin',
-          first_name: 'Grace',
-          last_name: 'Uwimana',
-          school: 1,
-          preferred_language: 'en'
-        }
-      };
+        body: JSON.stringify({
+          username,
+          password,
+        }),
+      });
 
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const data = await response.json();
 
-      // Check demo credentials
-      const demoPasswords: { [key: string]: string } = {
-        'teacher': 'teacher123',
-        'student': 'student123',
-        'parent': 'parent123',
-        'admin': 'admin123'
-      };
-
-      if (mockUsers[username] && password === demoPasswords[username]) {
-        const user = mockUsers[username];
-        const token = 'mock-jwt-token-' + user.id;
+      if (response.ok) {
+        // Login successful
+        const user: User = {
+          id: data.user.id,
+          username: data.user.username,
+          email: data.user.email,
+          role: data.user.role,
+          first_name: data.user.first_name,
+          last_name: data.user.last_name,
+          school: data.user.school_info?.school_id || data.user.school,
+          preferred_language: data.user.preferred_language || 'en',
+          school_info: data.user.school_info
+        };
+        
+        const token = data.access;
         
         localStorage.setItem('token', token);
+        localStorage.setItem('refresh_token', data.refresh);
+        
         dispatch({
           type: 'LOGIN_SUCCESS',
           payload: {
@@ -213,19 +182,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         return { success: true };
       } else {
+        // Login failed
         dispatch({ type: 'SET_LOADING', payload: false });
-        return { success: false, error: 'Invalid username or password' };
+        const errorMessage = data.non_field_errors?.[0] || data.detail || 'Login failed';
+        return { success: false, error: errorMessage };
       }
-
-      // TODO: Replace with actual API call when backend is ready
     } catch (error: any) {
       dispatch({ type: 'SET_LOADING', payload: false });
-      return { success: false, error: error.message || 'An unexpected error occurred' };
+      console.error('Login error:', error);
+      return { success: false, error: 'Network error. Please check your connection and try again.' };
     }
   };
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('refresh_token');
     dispatch({ type: 'LOGOUT' });
   };
 

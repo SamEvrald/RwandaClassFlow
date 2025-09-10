@@ -40,10 +40,18 @@ const Sidebar: React.FC = () => {
       case 'admin':
         return [
           ...commonItems,
-          { name: 'School Profile', href: '/school' },
-          { name: 'Users', href: '/users' },
-          { name: 'Classes & Subjects', href: '/academic' },
-          { name: 'Reports', href: '/reports' },
+          { name: 'School Profile', href: '/dashboard/school-profile' },
+          { name: 'User Management', href: '/dashboard/user-management' },
+          { name: 'Teachers', href: '/dashboard/teachers' },
+          { name: 'Students', href: '/dashboard/students' },
+          { name: 'Parents', href: '/dashboard/parents' },
+          { name: 'Classes & Subjects', href: '/dashboard/classes-subjects' },
+          { name: 'Assignments', href: '/dashboard/assignments' },
+          { name: 'Grading System', href: '/dashboard/grading' },
+          { name: 'Attendance', href: '/dashboard/attendance' },
+          { name: 'Communications', href: '/dashboard/communications' },
+          { name: 'Reports & Analytics', href: '/dashboard/reports' },
+          { name: 'System Settings', href: '/dashboard/settings' },
         ];
       default:
         return commonItems;
