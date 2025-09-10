@@ -58,11 +58,18 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   }
 };
 
-const AuthContext = createContext<{
-  state: AuthState;
-  login: (credentials: { username: string; password: string }) => Promise<void>;
+interface AuthContextType {
+  user: User | null;
+  token: string | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
-} | null>(null);
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export { AuthContext };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
@@ -76,8 +83,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const mockUsers: { [key: string]: User } = {
         '1': {
           id: 1,
-          username: 'teacher1',
-          email: 'teacher1@school.rw',
+          username: 'teacher',
+          email: 'teacher@school.rw',
           role: 'teacher',
           first_name: 'Jean',
           last_name: 'Mukamana',
@@ -86,8 +93,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
         '2': {
           id: 2,
-          username: 'student1',
-          email: 'student1@school.rw',
+          username: 'student',
+          email: 'student@school.rw',
           role: 'student',
           first_name: 'Alice',
           last_name: 'Uwimana',
@@ -96,8 +103,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
         '3': {
           id: 3,
-          username: 'parent1',
-          email: 'parent1@gmail.com',
+          username: 'parent',
+          email: 'parent@gmail.com',
           role: 'parent',
           first_name: 'Robert',
           last_name: 'Nzeyimana',
@@ -106,8 +113,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
         '4': {
           id: 4,
-          username: 'admin1',
-          email: 'admin1@school.rw',
+          username: 'admin',
+          email: 'admin@school.rw',
           role: 'school_admin',
           first_name: 'Grace',
           last_name: 'Uwimana',
@@ -132,46 +139,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const login = async (credentials: { username: string; password: string }) => {
+  const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       
       // For demo purposes, simulate different user roles based on username
       const mockUsers: { [key: string]: User } = {
-        'teacher1': {
+        'teacher': {
           id: 1,
-          username: 'teacher1',
-          email: 'teacher1@school.rw',
+          username: 'teacher',
+          email: 'teacher@school.rw',
           role: 'teacher',
           first_name: 'Jean',
           last_name: 'Mukamana',
           school: 1,
           preferred_language: 'en'
         },
-        'student1': {
+        'student': {
           id: 2,
-          username: 'student1',
-          email: 'student1@school.rw',
+          username: 'student',
+          email: 'student@school.rw',
           role: 'student',
           first_name: 'Alice',
           last_name: 'Uwimana',
           school: 1,
           preferred_language: 'en'
         },
-        'parent1': {
+        'parent': {
           id: 3,
-          username: 'parent1',
-          email: 'parent1@gmail.com',
+          username: 'parent',
+          email: 'parent@gmail.com',
           role: 'parent',
           first_name: 'Robert',
           last_name: 'Nzeyimana',
           school: 1,
           preferred_language: 'en'
         },
-        'admin1': {
+        'admin': {
           id: 4,
-          username: 'admin1',
-          email: 'admin1@school.rw',
+          username: 'admin',
+          email: 'admin@school.rw',
           role: 'school_admin',
           first_name: 'Grace',
           last_name: 'Uwimana',
@@ -183,8 +190,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      if (mockUsers[credentials.username] && credentials.password === 'password123') {
-        const user = mockUsers[credentials.username];
+      // Check demo credentials
+      const demoPasswords: { [key: string]: string } = {
+        'teacher': 'teacher123',
+        'student': 'student123',
+        'parent': 'parent123',
+        'admin': 'admin123'
+      };
+
+      if (mockUsers[username] && password === demoPasswords[username]) {
+        const user = mockUsers[username];
         const token = 'mock-jwt-token-' + user.id;
         
         localStorage.setItem('token', token);
@@ -195,37 +210,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             token,
           },
         });
+        
+        return { success: true };
       } else {
-        throw new Error('Invalid credentials');
+        dispatch({ type: 'SET_LOADING', payload: false });
+        return { success: false, error: 'Invalid username or password' };
       }
 
       // TODO: Replace with actual API call when backend is ready
-      /*
-      const response = await fetch('/api/users/login/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(credentials),
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem('token', data.access);
-        dispatch({
-          type: 'LOGIN_SUCCESS',
-          payload: {
-            user: data.user,
-            token: data.access,
-          },
-        });
-      } else {
-        throw new Error('Login failed');
-      }
-      */
-    } catch (error) {
+    } catch (error: any) {
       dispatch({ type: 'SET_LOADING', payload: false });
-      throw error;
+      return { success: false, error: error.message || 'An unexpected error occurred' };
     }
   };
 
@@ -235,7 +230,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ state, login, logout }}>
+    <AuthContext.Provider value={{
+      user: state.user,
+      token: state.token,
+      isAuthenticated: state.isAuthenticated,
+      isLoading: state.loading,
+      login,
+      logout
+    }}>
       {children}
     </AuthContext.Provider>
   );

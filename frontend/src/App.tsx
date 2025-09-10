@@ -6,6 +6,7 @@ import LandingPage from './components/landing/LandingPage';
 import AboutPage from './components/landing/AboutPage';
 import FeaturesPage from './components/landing/FeaturesPage';
 import Login from './components/auth/Login';
+import SchoolRegistration from './components/auth/SchoolRegistration';
 import Dashboard from './components/dashboard/Dashboard';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
@@ -20,6 +21,7 @@ function App() {
             <Route path="/about" element={<AboutPage />} />
             <Route path="/features" element={<FeaturesPage />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<SchoolRegistration />} />
             
             {/* Protected Routes */}
             <Route

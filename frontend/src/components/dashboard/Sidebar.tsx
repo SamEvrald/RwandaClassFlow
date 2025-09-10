@@ -1,11 +1,13 @@
 import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 const Sidebar: React.FC = () => {
-  const { state } = useAuth();
+  const { user } = useAuth();
+  const location = useLocation();
 
   const getMenuItems = () => {
-    const role = state.user?.role;
+    const role = user?.role;
     
     const commonItems = [
       { name: 'Dashboard', href: '/dashboard' },
@@ -23,9 +25,9 @@ const Sidebar: React.FC = () => {
       case 'student':
         return [
           ...commonItems,
-          { name: 'My Grades', href: '/grades' },
-          { name: 'Assignments', href: '/assignments' },
-          { name: 'Resources', href: '/resources' },
+          { name: 'Assignments', href: '/dashboard/assignments' },
+          { name: 'My Grades', href: '/dashboard/grades' },
+          { name: 'Resources', href: '/dashboard/resources' },
         ];
       case 'parent':
         return [
@@ -54,15 +56,22 @@ const Sidebar: React.FC = () => {
         <h2 className="text-xl font-bold text-blue-400">ClassFlow</h2>
       </div>
       <nav className="mt-6">
-        {getMenuItems().map((item) => (
-          <a
-            key={item.name}
-            href={item.href}
-            className="block px-6 py-3 text-sm hover:bg-gray-700 transition-colors"
-          >
-            {item.name}
-          </a>
-        ))}
+        {getMenuItems().map((item) => {
+          const isActive = location.pathname === item.href;
+          return (
+            <Link
+              key={item.name}
+              to={item.href}
+              className={`block px-6 py-3 text-sm transition-colors ${
+                isActive
+                  ? 'bg-blue-600 text-white border-r-4 border-blue-400'
+                  : 'hover:bg-gray-700'
+              }`}
+            >
+              {item.name}
+            </Link>
+          );
+        })}
       </nav>
     </div>
   );

@@ -336,3 +336,43 @@ class LearningResource(models.Model):
     
     def __str__(self):
         return f"{self.subject.subject_name} - {self.title}"
+
+
+class AssignmentSubmission(models.Model):
+    """Model for tracking student assignment submissions"""
+    SUBMISSION_STATUS = [
+        ('draft', _('Draft')),
+        ('submitted', _('Submitted')),
+        ('late', _('Late Submission')),
+        ('resubmitted', _('Resubmitted')),
+    ]
+    
+    student = models.ForeignKey('users.Student', on_delete=models.CASCADE, related_name='submissions')
+    assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE, related_name='submissions')
+    submission_text = models.TextField(blank=True)
+    submission_file = models.FileField(upload_to='assignment_submissions/', blank=True, null=True)
+    submission_url = models.URLField(blank=True)
+    status = models.CharField(max_length=20, choices=SUBMISSION_STATUS, default='draft')
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    is_late = models.BooleanField(default=False)
+    late_reason = models.TextField(blank=True)
+    submission_notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'assignment_submissions'
+        unique_together = ['student', 'assignment']
+        verbose_name = _('Assignment Submission')
+        verbose_name_plural = _('Assignment Submissions')
+        ordering = ['-submitted_at']
+    
+    def save(self, *args, **kwargs):
+        if self.status == 'submitted' and not self.submitted_at:
+            from django.utils import timezone
+            self.submitted_at = timezone.now()
+            self.is_late = self.submitted_at > self.assignment.submission_deadline
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return f"{self.student.user.get_full_name()} - {self.assignment.title}"
